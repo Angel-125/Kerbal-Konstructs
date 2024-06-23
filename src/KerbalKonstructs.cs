@@ -792,8 +792,9 @@ namespace KerbalKonstructs
             if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
                 EditorGUI.instance.CheckEditorKeys();
+                GroupEditor.instance.HandleKeyboardInput();
+//                GroupEditor.instance.CheckEditorKeys();
 
-                GroupEditor.instance.CheckEditorKeys();
 
 
                 if (Input.GetKeyDown(KeyCode.K) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))

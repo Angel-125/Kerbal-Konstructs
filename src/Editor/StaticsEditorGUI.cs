@@ -136,6 +136,12 @@ namespace KerbalKonstructs.UI
 
         public override void Open()
         {
+            InputLockManager.SetControlLock(ControlTypes.ALL_SHIP_CONTROLS, "KKShipLock");
+            InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KKEVALock");
+            InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KKCamModes");
+            InputLockManager.SetControlLock(ControlTypes.CAMERAMODES, "KKCamModes2");
+            InputLockManager.SetControlLock(ControlTypes.ACTIONS_ALL, "KKActions");
+
             allStaticModels = StaticDatabase.allStaticModels.Where(model => model.isHidden == false).ToArray();
             ConfigUtil.CreateNewInstanceDirIfNeeded();
             ResetLocalGroupList();
@@ -144,6 +150,12 @@ namespace KerbalKonstructs.UI
 
         public override void Close()
         {
+            InputLockManager.RemoveControlLock("KKShipLock");
+            InputLockManager.RemoveControlLock("KKEVALock");
+            InputLockManager.RemoveControlLock("KKCamModes");
+            InputLockManager.RemoveControlLock("KKCamModes2");
+            InputLockManager.RemoveControlLock("KKActions");
+
             EditorGUI.instance.Close();
             KerbalKonstructs.instance.DeletePreviewObject();
             MapDecalEditor.Instance.Close();

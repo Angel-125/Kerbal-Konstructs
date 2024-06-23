@@ -9,14 +9,6 @@ namespace KerbalKonstructs.UI
 {
     public class EditorGUI : KKWindow
     {
-
-        private enum Reference
-        {
-            Model,
-            Center
-        }
-
-
         internal static float windowWidth = 330;
         internal static float windowHeight = 750;
 
@@ -93,7 +85,7 @@ namespace KerbalKonstructs.UI
         private Vector3d savedPosition;
         private bool savedpos = false;
 
-        private static Reference referenceSystem = Reference.Center;
+        private static ReferenceSystemModes referenceSystem = ReferenceSystemModes.Absolute;
 
         private Vector3d savedRotation = Vector3d.zero;
 
@@ -325,19 +317,19 @@ namespace KerbalKonstructs.UI
                 GUILayout.Label("Reference System: ");
                 GUILayout.Label(referenceSystem.ToString(), UIMain.LabelWhite);
                 GUILayout.FlexibleSpace();
-                GUI.enabled = (referenceSystem == Reference.Center);
+                GUI.enabled = (referenceSystem == ReferenceSystemModes.Absolute);
 
                 if (GUILayout.Button(new GUIContent(UIMain.iconCubes, "Model"), GUILayout.Height(23), GUILayout.Width(23)))
                 {
-                    referenceSystem = Reference.Model;
+                    referenceSystem = ReferenceSystemModes.Local;
                     UpdateGizmo();
                     UpdateVectors();
                 }
 
-                GUI.enabled = (referenceSystem == Reference.Model);
+                GUI.enabled = (referenceSystem == ReferenceSystemModes.Local);
                 if (GUILayout.Button(new GUIContent(UIMain.iconWorld, "Group Center"), GUILayout.Height(23), GUILayout.Width(23)))
                 {
-                    referenceSystem = Reference.Center;
+                    referenceSystem = ReferenceSystemModes.Absolute;
                     UpdateGizmo();
                     UpdateVectors();
                 }
@@ -942,7 +934,7 @@ namespace KerbalKonstructs.UI
 
             cameraDistance = Vector3.Distance(selectedInstance.transform.position, FlightCamera.fetch.transform.position) / 4;
 
-            if (referenceSystem == Reference.Center)
+            if (referenceSystem == ReferenceSystemModes.Absolute)
             {
                 fwdVR.SetShow(true);
                 upVR.SetShow(true);
@@ -1036,7 +1028,7 @@ namespace KerbalKonstructs.UI
         private void SetupGizmo()
         {
             origLocalPosition = selectedInstance.transform.localPosition;
-            if (referenceSystem == Reference.Center)
+            if (referenceSystem == ReferenceSystemModes.Absolute)
             {
                 EditorGizmo.SetupMoveGizmo(selectedInstance.gameObject, selectedInstance.transform.localRotation, OnMoveCB, WhenMovedCB);
             }
@@ -1048,12 +1040,12 @@ namespace KerbalKonstructs.UI
 
         private void CloseGizmo()
         {
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
         }
 
         private void UpdateGizmo()
         {
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
             SetupGizmo();
         }
 
@@ -1121,7 +1113,7 @@ namespace KerbalKonstructs.UI
         {
             direction = direction / selectedInstance.ModelScale;
             //selectedInstance.gameObject.transform.Translate(direction, Space.Self);
-            if (referenceSystem == Reference.Center)
+            if (referenceSystem == ReferenceSystemModes.Absolute)
             {
                 selectedInstance.transform.localPosition += direction;
             }
@@ -1224,13 +1216,13 @@ namespace KerbalKonstructs.UI
                     }
                     if (Input.GetKeyDown(KeyCode.F))
                     {
-                        if (referenceSystem == Reference.Center)
+                        if (referenceSystem == ReferenceSystemModes.Absolute)
                         {
-                            referenceSystem = Reference.Model;
+                            referenceSystem = ReferenceSystemModes.Local;
                         }
                         else
                         {
-                            referenceSystem = Reference.Center;
+                            referenceSystem = ReferenceSystemModes.Absolute;
                         }
                         UpdateGizmo();
                         UpdateVectors();

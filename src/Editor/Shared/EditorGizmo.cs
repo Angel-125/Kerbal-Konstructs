@@ -68,7 +68,7 @@ namespace KerbalKonstructs.UI
             }
         }
 
-        internal static void CloseGizmo()
+        internal static void CloseGizmos()
         {
             if (moveGizmo != null)
             {

@@ -310,7 +310,6 @@ namespace KerbalKonstructs.Core
         /// <param name="site"></param>
         internal static void RegisterLaunchSite(KKLaunchSite site)
         {
-
             if (string.IsNullOrEmpty(site.LaunchSiteName))
             {
                 Log.UserWarning("No LaunchSiteName specified:" + site);
@@ -410,6 +409,7 @@ namespace KerbalKonstructs.Core
             {
                 CustomSpaceCenter.CreateFromLaunchsite(site);
             }
+
 
 
             //if (PSystemSetup.Instance.SpaceCenterFacilities.ToList().Where(fac => fac.facilityName == site.LaunchSiteName).FirstOrDefault() != null)

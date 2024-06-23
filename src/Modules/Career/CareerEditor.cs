@@ -801,12 +801,12 @@ namespace KerbalKonstructs.Modules
 
         private void CloseGizmo()
         {
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
         }
 
         private void UpdateGizmo()
         {
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
             SetupGizmo();
         }
 

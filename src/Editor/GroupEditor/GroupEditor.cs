@@ -5,9 +5,8 @@ using UnityEngine;
 
 namespace KerbalKonstructs.UI
 {
-    public class GroupEditor : KKWindow
+    public class GroupEditor : BaseEditor
     {
-
         private static GroupEditor _instance = null;
         public static GroupEditor instance
         {
@@ -32,8 +31,6 @@ namespace KerbalKonstructs.UI
         internal Boolean foldedIn = false;
         internal Boolean doneFold = false;
 
-
-
         #region Texture Definitions
         // Texture definitions
         internal Texture tHorizontalSep = GameDatabase.Instance.GetTexture("KerbalKonstructs/Assets/horizontalsep2", false);
@@ -44,11 +41,9 @@ namespace KerbalKonstructs.UI
         internal Texture tFoldIn = GameDatabase.Instance.GetTexture("KerbalKonstructs/Assets/foldout", false);
         internal Texture tFolded = GameDatabase.Instance.GetTexture("KerbalKonstructs/Assets/foldout", false);
 
-
         #endregion
 
         #region Switches
-
 
         #endregion
 
@@ -58,7 +53,6 @@ namespace KerbalKonstructs.UI
 
         #endregion
 
-
         #region Holders
         // Holders
 
@@ -67,26 +61,12 @@ namespace KerbalKonstructs.UI
 
         internal string refLat, refLng, headingStr;
 
-        //internal static String facType = "None";
-        //internal static String sGroup = "Ungrouped";
-        private float increment = 1f;
-
-
         private VectorRenderer upVR = new VectorRenderer();
         private VectorRenderer fwdVR = new VectorRenderer();
         private VectorRenderer rightVR = new VectorRenderer();
 
         private VectorRenderer northVR = new VectorRenderer();
         private VectorRenderer eastVR = new VectorRenderer();
-
-
-        private static Space referenceSystem = Space.Self;
-
-        private static Vector3d position = Vector3d.zero;
-        private Vector3d savedReferenceVector = Vector3d.zero;
-
-
-        private static Vector3 startPosition = Vector3.zero;
 
         internal static float maxEditorRange = 250;
 
@@ -110,17 +90,10 @@ namespace KerbalKonstructs.UI
 
         public override void Close()
         {
-
-            if (KerbalKonstructs.camControl.active)
-            {
-                KerbalKonstructs.camControl.disable();
-            }
+            base.Close();
 
             CloseVectors();
-            EditorGizmo.CloseGizmo();
-            CloseEditors();
             selectedObjectPrevious = null;
-            base.Close();
         }
 
         #region draw Methods
@@ -141,7 +114,7 @@ namespace KerbalKonstructs.UI
                 selectedObjectPrevious = groupCenter;
                 SetupVectors();
                 UpdateStrings();
-                EditorGizmo.SetupMoveGizmo(groupCenter.gameObject, Quaternion.identity, OnMoveCallBack, WhenMovedCallBack);
+                UpdateMoveGizmo();
                 if (!KerbalKonstructs.camControl.active)
                 {
                     KerbalKonstructs.camControl.enable(groupCenter.gameObject);
@@ -291,19 +264,17 @@ namespace KerbalKonstructs.UI
             GUILayout.BeginHorizontal();
             GUILayout.Label("Reference System: ");
             GUILayout.FlexibleSpace();
-            GUI.enabled = (referenceSystem == Space.World);
 
-            if (GUILayout.Button(new GUIContent(UIMain.iconCubes, "Model"), GUILayout.Height(23), GUILayout.Width(23)))
+            if (GUILayout.Button(new GUIContent(UIMain.iconCubes, "Local"), GUILayout.Height(23), GUILayout.Width(23)))
             {
-                referenceSystem = Space.Self;
-                UpdateVectors();
+                referenceSystem = ReferenceSystemModes.Local;
+                UpdateMoveGizmo();
             }
 
-            GUI.enabled = (referenceSystem == Space.Self);
-            if (GUILayout.Button(new GUIContent(UIMain.iconWorld, "World"), GUILayout.Height(23), GUILayout.Width(23)))
+            if (GUILayout.Button(new GUIContent(UIMain.iconWorld, "Absolute"), GUILayout.Height(23), GUILayout.Width(23)))
             {
-                referenceSystem = Space.World;
-                UpdateVectors();
+                referenceSystem = ReferenceSystemModes.Absolute;
+                UpdateMoveGizmo();
             }
             GUI.enabled = true;
 
@@ -316,7 +287,7 @@ namespace KerbalKonstructs.UI
             //
             GUILayout.BeginHorizontal();
 
-            if (referenceSystem == Space.Self)
+            if (referenceSystem == ReferenceSystemModes.Local)
             {
                 GUILayout.Label("Back / Forward:");
                 GUILayout.FlexibleSpace();
@@ -326,11 +297,11 @@ namespace KerbalKonstructs.UI
 
                 if (GUILayout.RepeatButton("<<", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.Button("<", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    SetTransform(Vector3.back * increment);
+                    SetTransform(Vector3.back);
                 }
                 if (GUILayout.Button(">", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.RepeatButton(">>", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    SetTransform(Vector3.forward * increment);
+                    SetTransform(Vector3.forward);
                 }
                 GUILayout.EndHorizontal();
 
@@ -339,11 +310,11 @@ namespace KerbalKonstructs.UI
                 GUILayout.FlexibleSpace();
                 if (GUILayout.RepeatButton("<<", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.Button("<", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    SetTransform(Vector3.left * increment);
+                    SetTransform(Vector3.left);
                 }
                 if (GUILayout.Button(">", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.RepeatButton(">>", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    SetTransform(Vector3.right * increment);
+                    SetTransform(Vector3.right);
                 }
                 GUILayout.EndHorizontal();
 
@@ -360,11 +331,11 @@ namespace KerbalKonstructs.UI
 
                 if (GUILayout.RepeatButton("<<", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.Button("<", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    Setlatlng(0d, -increment);
+                    OffsetLongLang(0d, -increment);
                 }
                 if (GUILayout.Button(">", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.RepeatButton(">>", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    Setlatlng(0d, increment);
+                    OffsetLongLang(0d, increment);
                 }
                 GUILayout.EndHorizontal();
 
@@ -373,11 +344,11 @@ namespace KerbalKonstructs.UI
                 GUILayout.FlexibleSpace();
                 if (GUILayout.RepeatButton("<<", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.Button("<", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    Setlatlng(-increment, 0d);
+                    OffsetLongLang(-increment, 0d);
                 }
                 if (GUILayout.Button(">", GUILayout.Width(30), GUILayout.Height(21)) || GUILayout.RepeatButton(">>", GUILayout.Width(30), GUILayout.Height(21)))
                 {
-                    Setlatlng(increment, 0d);
+                    OffsetLongLang(increment, 0d);
                 }
             }
 
@@ -517,17 +488,6 @@ namespace KerbalKonstructs.UI
 
         #endregion
 
-
-        /// <summary>
-        /// closes the sub editor windows
-        /// </summary>
-        public static void CloseEditors()
-        {
-            FacilityEditor.instance.Close();
-            LaunchSiteEditor.instance.Close();
-        }
-
-
         #endregion
 
         #region Utility Functions
@@ -630,57 +590,59 @@ namespace KerbalKonstructs.UI
             get
             {
                 body = FlightGlobals.ActiveVessel.mainBody;
-                return (Vector3)body.GetSurfaceNVector(selectedGroup.RefLatitude, selectedGroup.RefLongitude).normalized;
+                return body.GetSurfaceNVector(selectedGroup.RefLatitude, selectedGroup.RefLongitude).normalized;
             }
         }
 
         /// <summary>
         /// Sets the vectors active and updates thier position and directions
         /// </summary>
-        private void UpdateVectors()
+        internal void UpdateVectors()
         {
             if (selectedGroup == null)
             {
                 return;
             }
 
-            if (referenceSystem == Space.Self)
+            switch (referenceSystem)
             {
-                fwdVR.SetShow(true);
-                upVR.SetShow(true);
-                rightVR.SetShow(true);
+                case ReferenceSystemModes.Local:
+                    fwdVR.SetShow(true);
+                    upVR.SetShow(true);
+                    rightVR.SetShow(true);
 
-                northVR.SetShow(false);
-                eastVR.SetShow(false);
+                    northVR.SetShow(false);
+                    eastVR.SetShow(false);
 
-                fwdVR.Vector = selectedGroup.gameObject.transform.forward;
-                fwdVR.Start = vectorDrawPosition;
-                fwdVR.Draw();
+                    fwdVR.Vector = selectedGroup.gameObject.transform.forward;
+                    fwdVR.Start = vectorDrawPosition;
+                    fwdVR.Draw();
 
-                upVR.Vector = selectedGroup.gameObject.transform.up;
-                upVR.Start = vectorDrawPosition;
-                upVR.Draw();
+                    upVR.Vector = selectedGroup.gameObject.transform.up;
+                    upVR.Start = vectorDrawPosition;
+                    upVR.Draw();
 
-                rightVR.Vector = selectedGroup.gameObject.transform.right;
-                rightVR.Start = vectorDrawPosition;
-                rightVR.Draw();
-            }
-            if (referenceSystem == Space.World)
-            {
-                northVR.SetShow(true);
-                eastVR.SetShow(true);
+                    rightVR.Vector = selectedGroup.gameObject.transform.right;
+                    rightVR.Start = vectorDrawPosition;
+                    rightVR.Draw();
+                    break;
 
-                fwdVR.SetShow(false);
-                upVR.SetShow(false);
-                rightVR.SetShow(false);
+                case ReferenceSystemModes.Absolute:
+                    northVR.SetShow(true);
+                    eastVR.SetShow(true);
 
-                northVR.Vector = northVector;
-                northVR.Start = vectorDrawPosition;
-                northVR.Draw();
+                    fwdVR.SetShow(false);
+                    upVR.SetShow(false);
+                    rightVR.SetShow(false);
 
-                eastVR.Vector = eastVector;
-                eastVR.Start = vectorDrawPosition;
-                eastVR.Draw();
+                    northVR.Vector = northVector;
+                    northVR.Start = vectorDrawPosition;
+                    northVR.Draw();
+
+                    eastVR.Vector = eastVector;
+                    eastVR.Start = vectorDrawPosition;
+                    eastVR.Draw();
+                    break;
             }
         }
 
@@ -742,9 +704,9 @@ namespace KerbalKonstructs.UI
         /// <summary>
         /// sets the latitude and lognitude from the deltas of north and east and creates a new reference vector
         /// </summary>
-        /// <param name="north"></param>
-        /// <param name="east"></param>
-        internal void Setlatlng(double north, double east)
+        /// <param name="north">How far to move north/south</param>
+        /// <param name="east">How far to move east/west</param>
+        internal void OffsetLongLang(double north, double east)
         {
             body = Planetarium.fetch.CurrentMainBody;
             double latOffset = north / (body.Radius * KKMath.deg2rad);
@@ -756,14 +718,10 @@ namespace KerbalKonstructs.UI
             ApplySettings();
         }
 
-
-
-
-
         /// <summary>
         /// changes the rotation by a defined amount
         /// </summary>
-        /// <param name="increment"></param>
+        /// <param name="increment">How much to rotate by</param>
         internal void SetRotation(float increment)
         {
             selectedGroup.RotationAngle += (float)increment;
@@ -771,29 +729,43 @@ namespace KerbalKonstructs.UI
             ApplySettings();
         }
 
-
         /// <summary>
         /// Updates the StaticObject position with a new transform
         /// </summary>
-        /// <param name="direction"></param>
-        internal void SetTransform(Vector3 direction)
+        /// <param name="direction">The direction to go in.</param>
+        public override void SetTransform(Vector3 direction)
         {
             // adjust transform for scaled models
-            direction = direction / selectedGroup.ModelScale;
-            direction = selectedGroup.gameObject.transform.TransformVector(direction);
-            double northInc = Vector3d.Dot(northVector, direction);
-            double eastInc = Vector3d.Dot(eastVector, direction);
+            Vector3 scaledDirection = (direction / selectedGroup.ModelScale) * increment;
+            scaledDirection = selectedGroup.gameObject.transform.TransformVector(scaledDirection);
+            double northInc = Vector3d.Dot(northVector, scaledDirection);
+            double eastInc = Vector3d.Dot(eastVector, scaledDirection);
 
-            Setlatlng(northInc, eastInc);
+            if (referenceSystem == ReferenceSystemModes.Local)
+            {
+                OffsetLongLang(northInc, eastInc);
+            }
+            else if (referenceSystem == ReferenceSystemModes.Absolute)
+            {
+                if (direction == Vector3.forward || direction == Vector3.back)
+                {
+                    OffsetLongLang(northInc, 0);
+                }
+                else if (direction == Vector3.left || direction == Vector3.right)
+                {
+                    OffsetLongLang(0, eastInc);
+                }
+                else if (direction == Vector3.up || direction == Vector3.down)
+                {
 
+                }
+            }
         }
-
-
-        internal void OnMoveCallBack(Vector3 vector)
+        public override void OnMoveCallBack(Vector3 vector)
         {
-            // Log.Normal("OnMove: " + vector.ToString());
-            //moveGizmo.transform.position += 3* vector;
+            base.OnMoveCallBack(vector);
 
+            absoluteMoveGameObject.transform.position = EditorGizmo.moveGizmo.transform.position;
             selectedGroup.gameObject.transform.position = EditorGizmo.moveGizmo.transform.position;
             selectedGroup.RadialPosition = selectedGroup.gameObject.transform.localPosition;
 
@@ -801,25 +773,41 @@ namespace KerbalKonstructs.UI
             selectedGroup.CelestialBody.GetLatLonAlt(EditorGizmo.moveGizmo.transform.position, out selectedGroup.RefLatitude, out selectedGroup.RefLongitude, out alt);
 
             selectedGroup.RadiusOffset = (float)(alt - selectedGroup.surfaceHeight);
-            //float oldY = selectedInstance.gameObject.transform.localPosition.y;
-
         }
 
-        internal void WhenMovedCallBack(Vector3 vector)
+        public override void WhenMovedCallBack(Vector3 vector)
         {
-            ApplySettings();
-            //Log.Normal("WhenMoved: " + vector.ToString());
+            base.WhenMovedCallBack(vector);
+            selectedGroup.Update();
+            UpdateStrings();
+            UpdateVectors();
         }
 
-        internal void UpdateMoveGizmo()
+        public override void UpdateLocalMoveGameObject()
         {
-            EditorGizmo.CloseGizmo();
-            EditorGizmo.SetupMoveGizmo(selectedGroup.gameObject, Quaternion.identity, OnMoveCallBack, WhenMovedCallBack);
+            localMoveObject = selectedGroup.gameObject;
         }
 
+        public override void UpdateAbsoluteGameObject()
+        {
+            absoluteMoveGameObject.transform.position = selectedGroup.gameObject.transform.position;
 
+            Vector3 forward = selectedGroup.CelestialBody.GetRelSurfacePosition(selectedGroup.RefLatitude, selectedGroup.RefLongitude + selectedGroup.CelestialBody.directRotAngle, selectedGroup.RadiusOffset);
+            Quaternion rotForward = Quaternion.LookRotation(forward);
+            Quaternion rotHeading = Quaternion.Euler(0f, 0f, 0);
+            Quaternion halveInvert = Quaternion.Euler(-90f, -90f, -90f);
+            Quaternion newRotation = rotForward * rotHeading * halveInvert;
 
-        internal void ApplyInputStrings()
+            absoluteMoveGameObject.transform.rotation = newRotation;
+        }
+
+        public override void UpdateMoveGizmo()
+        {
+            base.UpdateMoveGizmo();
+            UpdateVectors();
+        }
+
+        public override void ApplyInputStrings()
         {
 
             selectedGroup.RefLatitude = double.Parse(refLat);
@@ -827,18 +815,13 @@ namespace KerbalKonstructs.UI
 
             selectedGroup.RadialPosition = KKMath.GetRadiadFromLatLng(selectedGroup.CelestialBody, selectedGroup.RefLatitude, selectedGroup.RefLongitude);
 
-
             float oldRotation = selectedGroup.RotationAngle;
             float tgtheading = float.Parse(headingStr);
             float diffHeading = (tgtheading - selectedGroup.heading);
 
             selectedGroup.RotationAngle = oldRotation + diffHeading;
 
-
             ApplySettings();
-
-
-
 
             selectedGroup.RefLatitude = double.Parse(refLat);
             selectedGroup.RefLongitude = double.Parse(refLng);
@@ -863,50 +846,6 @@ namespace KerbalKonstructs.UI
             UpdateStrings();
             UpdateMoveGizmo();
         }
-
-
-        internal void CheckEditorKeys()
-        {
-            if (selectedGroup != null)
-            {
-
-                if (IsOpen())
-                {
-                    if (Input.GetKey(KeyCode.W))
-                    {
-                        SetTransform(Vector3.forward * increment);
-                    }
-                    if (Input.GetKey(KeyCode.S))
-                    {
-                        SetTransform(Vector3.back * increment);
-                    }
-                    if (Input.GetKey(KeyCode.D))
-                    {
-                        SetTransform(Vector3.right * increment);
-                    }
-                    if (Input.GetKey(KeyCode.A))
-                    {
-                        SetTransform(Vector3.left * increment);
-                    }
-                    if (Input.GetKey(KeyCode.PageUp))
-                    {
-                        SetTransform(Vector3.up * increment);
-                    }
-                    if (Input.GetKey(KeyCode.PageDown))
-                    {
-                        SetTransform(Vector3.down * increment);
-                    }
-                    if (Event.current.keyCode == KeyCode.Return)
-                    {
-                        ApplyInputStrings();
-                    }
-                }
-
-            }
-
-        }
-
-
         #endregion
     }
 }

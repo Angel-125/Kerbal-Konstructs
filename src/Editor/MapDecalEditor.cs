@@ -123,7 +123,7 @@ namespace KerbalKonstructs.UI
             }
 
             CloseVectors();
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
             base.Close();
             selectedDecal = null;
         }
@@ -1087,7 +1087,7 @@ namespace KerbalKonstructs.UI
 
         internal void UpdateMoveGizmo()
         {
-            EditorGizmo.CloseGizmo();
+            EditorGizmo.CloseGizmos();
             EditorGizmo.SetupMoveGizmo(selectedDecal.gameObject, Quaternion.identity, OnMoveCallBack, WhenMovedCallBack);
         }
 
